@@ -1,5 +1,5 @@
 cairocffi
 cairosvg
-cupy-cuda12x
+numpy
 Pillow
 scikit-image
