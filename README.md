@@ -1,4 +1,3 @@
-```markdown
 # Raster to Waves Converter
 
 ## Overview
@@ -71,4 +70,3 @@ This project is licensed under the GPLv3 License - see the LICENSE file for deta
 ## Acknowledgments
 
 This project utilizes several open-source software libraries, including NumPy, Pillow, scikit-image, CairoCFFI, and CairoSVG. It is derived from the SquiggleDraw and PySquiggleDraw projects. Thanks to the developers of these libraries and projects for their invaluable contributions to the open-source community.
-```
