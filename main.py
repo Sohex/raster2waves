@@ -434,7 +434,7 @@ class RasterToWavesGUI(tk.Tk):
                 img_rgb = np.asarray(img.convert("RGB"))
                 aspect_ratio = img_rgb.shape[1] / img_rgb.shape[0]
 
-                max_dim = 1024
+                max_dim = 512
                 if max(img_rgb.shape) > max_dim:
                     if aspect_ratio > 1:
                         new_width = max_dim
