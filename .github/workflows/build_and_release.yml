@@ -28,7 +28,7 @@ jobs:
 
       - name: Rename executable
         run: |
-          Rename-Item dist\main.exe dist\raster2waves.exe
+          Move-Item dist\main.exe dist\raster2waves.exe
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
