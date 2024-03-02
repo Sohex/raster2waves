@@ -22,9 +22,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller
 
+      - name: Install MSYS2
+        run: |
+          choco install msys2 --no-progress -y
+
+      - name: Install Cairo via MSYS2
+        run: |
+          C:\tools\msys64\usr\bin\bash -lc "pacman --noconfirm -Syu"
+          C:\tools\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-x86_64-cairo"
+
+      - name: Copy libcairo2.dll to project directory
+        run: |
+          Copy-Item C:\tools\msys64\mingw64\bin\libcairo-2.dll ./libcairo2.dll
+
       - name: Build executable with PyInstaller
         run: |
-          pyinstaller --onefile main.py
+          pyinstaller --onefile --add-binary "libcairo2.dll;." main.py
 
       - name: Rename executable
         run: |
