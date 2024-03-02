@@ -1,0 +1,5 @@
+cairocffi
+cairosvg
+cupy-cuda12x
+Pillow
+scikit-image
