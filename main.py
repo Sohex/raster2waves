@@ -329,8 +329,6 @@ class RasterToWavesGUI(tk.Tk):
             setattr(self, f"{param}_entry", entry)
             setattr(self, f"{param}_var", var)
             
-            entry = tk.Entry(self.param_frame, width=4, textvariable=var)
-            entry.grid(row=row, column=column*2+1, padx=5, pady=5)
             tooltip_text = f"{text}\nMin value: {min_value}, Max value: {max_value}"
             ToolTip(entry, tooltip_text)
 
@@ -376,7 +374,7 @@ class RasterToWavesGUI(tk.Tk):
         Args:
             event (Event, optional): The event that triggered the update. Defaults to None.
         """
-        for param, (default_value, var_type, min_value, max_value) in self.params.items():
+        for param, (default_value, var_type, min_value, max_value, text) in self.params.items():
             entry = getattr(self, f"{param}_entry")
             var = getattr(self, f"{param}_var")
             try:
@@ -429,25 +427,20 @@ class RasterToWavesGUI(tk.Tk):
             if not file_path:
                 return
 
+            max_dim = 1024
             self.image_path = file_path
-            with Image.open(file_path) as img:
-                img_rgb = np.asarray(img.convert("RGB"))
-                aspect_ratio = img_rgb.shape[1] / img_rgb.shape[0]
-
-                max_dim = 512
-                if max(img_rgb.shape) > max_dim:
-                    if aspect_ratio > 1:
-                        new_width = max_dim
-                        new_height = int(max_dim / aspect_ratio)
-                    else:
-                        new_height = max_dim
-                        new_width = int(max_dim * aspect_ratio)
-
-                    img = img.thumbnail((new_width, new_height), Image.LANCZOS)
-                    img_rgb = np.asarray(img)
-
-                self.img_rgb = img_rgb
-                self.aspect_ratio = aspect_ratio
+            try:
+                with Image.open(file_path) as img:
+                    img_rgb = np.asarray(img.convert("RGB"))
+                    if max(img_rgb.shape) > max_dim:
+                        raise ValueError(f"Image dimensions must be less than {max_dim} pixels.")
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred while loading the image: {e}")
+                self.image_path = None
+                return
+            
+            self.img_rgb = img_rgb
+            self.aspect_ratio = img_rgb.shape[1] / img_rgb.shape[0]
                 
             self.process_image()
 
