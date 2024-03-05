@@ -59,6 +59,10 @@ The GUI allows you to:
 
 For advanced users, the program's modular design allows for customization and integration into other Python projects. The `RasterToWavesDriver` class can be used independently of the GUI for script-based processing.
 
+### TODO
+- Parallelize processing of each line
+- Process line then solve waveform rather than solving it sequentially as line is processed?
+
 ## Contributing
 
 Contributions to the project are welcome. Please follow the standard fork and pull request workflow.
