@@ -34,11 +34,11 @@ jobs:
 
       - name: Copy libcairo2.dll to project directory
         run: |
-          Copy-Item C:\tools\msys64\mingw64\bin\libcairo-2.dll ./libcairo2.dll
+          Copy-Item C:\tools\msys64\mingw64\bin\libcairo-2.dll ./libcairo-2.dll
 
       - name: Build executable with PyInstaller
         run: |
-          pyinstaller --onefile --windowed --add-binary="libcairo2.dll;." --add-data="Uncoated_Fogra47L_VIGC_260.icc;." main.py
+          pyinstaller --onefile --windowed --add-binary="libcairo-2.dll;." --add-data="Uncoated_Fogra47L_VIGC_260.icc;." main.py
 
       - name: Rename executable
         run: |
