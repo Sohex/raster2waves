@@ -1,15 +1,28 @@
 from io import BytesIO
 import numpy as np
 from pathlib import Path
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageCms
 from skimage.measure import block_reduce
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import os
-os.environ['path'] += r';C:\Program Files\Inkscape\bin'
+import sys
 import cairocffi as cairo
 import cairosvg
 from concurrent.futures import ThreadPoolExecutor
+
+def get_profile_path():
+    """
+    Get the path to the ICC profile.
+
+    Returns:
+        str: The path to the ICC profile.
+    """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, "Uncoated_Fogra47L_VIGC_260.icc")
 
 class RasterToWavesDriver:
     """
@@ -187,34 +200,23 @@ class RasterToWavesDriver:
         with ThreadPoolExecutor() as executor:
             executor.map(process_channel_and_calculate_waves, channel_opts)
 
-def split_cmyk(rgb_array, threshold=1):
-    """
-    Splits an RGB image into CMYK channels.
-
-    Parameters:
-    - rgb_array (numpy.ndarray): The input RGB image as a numpy array.
-    - threshold (float): The threshold value for channel separation. Default is 1.
-
-    Returns:
-    - channels (dict): A dictionary containing the CMYK channels as numpy arrays.
-                       The keys are 'C', 'M', 'Y', and 'K'.
-    """
-
-    data = rgb_array.astype(float) / 255
-    threshold = threshold / 255
+def convert_rgb_to_cmyk(rgb_image_path, cmyk_profile_path):
+    rgb_image = Image.open(rgb_image_path)
     
-    channel_max = data.max(2)
-    channel_max[channel_max < threshold] = threshold
-    
-    k = 1 - channel_max
-    c = (1 - data[:, :, 0] - k) / channel_max
-    m = (1 - data[:, :, 1] - k) / channel_max
-    y = (1 - data[:, :, 2] - k) / channel_max
-    
-    result = 1 - np.array([c, m, y, k])
-    channels = {}
-    channels["C"], channels["M"], channels["Y"], channels["K"] = [(_ * 255).round().astype(np.uint8) for _ in result]
-    return channels
+    if 'icc_profile' in rgb_image.info:
+        rgb_profile = ImageCms.ImageCmsProfile(BytesIO(rgb_image.info['icc_profile']))
+    else:
+        rgb_profile = ImageCms.createProfile('sRGB')
+        
+    cmyk_profile = ImageCms.getOpenProfile(cmyk_profile_path)
+    transform = ImageCms.buildTransformFromOpenProfiles(rgb_profile, cmyk_profile, "RGB", "CMYK")
+    cmyk_image = ImageCms.applyTransform(rgb_image, transform)
+    return cmyk_image
+
+def split_cmyk_channels(cmyk_image):
+    cmyk_np = np.array(cmyk_image)
+    C, M, Y, K = cmyk_np[:, :, 0], cmyk_np[:, :, 1], cmyk_np[:, :, 2], cmyk_np[:, :, 3]
+    return {"C": C, "M": M, "Y": Y, "K": K}
 
 class ToolTip:
     def __init__(self, widget, text):
@@ -301,17 +303,17 @@ class RasterToWavesGUI(tk.Tk):
         
         # Define default values and update methods
         self.params = {
-            "downsample_factor": (12, tk.IntVar, 0, 100, "Factor by which to downsample the image."),
+            "downsample_factor": (24, tk.IntVar, 0, 100, "Factor by which to downsample the image."),
             "contrast_cutoff": (1, tk.IntVar, 0, 255, "Adjust contrast cutoff. Lower values increase contrast."),
             "max_wave_num": (4, tk.IntVar, 0, 255, "Maximum number of waves per half period."),
-            "wave_num_factor": (1.2, tk.DoubleVar, 0., 10., "Weighting factor for wave number calculation."),
-            "max_amplitude": (8, tk.DoubleVar, 0., 255., "Maximum amplitude of the waves."),
+            "wave_num_factor": (1, tk.DoubleVar, 0., 10., "Weighting factor for wave number calculation."),
+            "max_amplitude": (12, tk.DoubleVar, 0., 255., "Maximum amplitude of the waves."),
             "amplitude_factor": (1, tk.DoubleVar, 0., 10., "Weighting factor for amplitude calculation."),
-            "resolution": (20, tk.IntVar, 0, 255, "Number of points to calculate along the x-axis."),
-            "canvas_width": (8.5, tk.DoubleVar, 0., 100., "Width of the canvas in inches."),
-            "canvas_height": (11, tk.DoubleVar, 0., 100., "Height of the canvas in inches."),
-            "border": (.5, tk.DoubleVar, 0., 100., "Width of the border around the canvas in inches."),
-            "line_width": (.2, tk.DoubleVar, 0., 10., "Width of the lines used to render the waves.")
+            "resolution": (50, tk.IntVar, 0, 255, "Number of points to calculate along the x-axis."),
+            "canvas_width": (11, tk.DoubleVar, 0., 100., "Width of the canvas in inches."),
+            "canvas_height": (14, tk.DoubleVar, 0., 100., "Height of the canvas in inches."),
+            "border": (0, tk.DoubleVar, 0., 100., "Width of the border around the canvas in inches."),
+            "line_width": (.25, tk.DoubleVar, 0., 10., "Width of the lines used to render the waves.")
         }
 
         # Create label and entry pairs
@@ -465,7 +467,10 @@ class RasterToWavesGUI(tk.Tk):
             "line_width": self.line_width_var.get()
         }
 
-        split_img = split_cmyk(self.img_rgb)
+        cmyk_profile_path = get_profile_path()
+
+        converted_img = convert_rgb_to_cmyk(self.image_path, cmyk_profile_path)
+        split_img = split_cmyk_channels(converted_img)
         self.aspect_ratio = self.img_rgb.shape[1] / self.img_rgb.shape[0]
 
         self.driver = RasterToWavesDriver(split_img, self.aspect_ratio)

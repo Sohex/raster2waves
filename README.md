@@ -9,7 +9,7 @@ This program converts raster images into waveforms, allowing users to visualize 
 ### Prerequisites
 
 - Python3
-- libcairo (on Linux this comes from your package manager, on Windows we're using the one provided by inkscape by default, but anything that packages libcairo2.dll will work.)
+- libcairo2
 
 ### Steps
 
@@ -38,7 +38,7 @@ Run the program using Python:
 python main.py
 ```
 
-Alternatively use the packaged pyinstaller executable, e.g. raster2waves.exe
+Alternatively use the packaged executable, i.e. raster2waves.exe
 
 ### User Interface
 
