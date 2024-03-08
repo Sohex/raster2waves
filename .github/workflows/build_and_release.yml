@@ -38,7 +38,7 @@ jobs:
 
       - name: Build executable with PyInstaller
         run: |
-          pyinstaller --onefile --add-binary "libcairo2.dll;." main.py
+          pyinstaller --onefile --windowed --add-binary "libcairo2.dll;." --add-data "Uncoated_Fogra47L_VIGC_260.icc" main.py
 
       - name: Rename executable
         run: |
