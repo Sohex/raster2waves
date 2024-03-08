@@ -7,6 +7,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import os
 import sys
+base_dir = sys._MEIPASS if hasattr(sys, '_MEIPASS') else os.path.abspath(".")
+os.environ['path'] += f';{base_dir}'
 import cairocffi as cairo
 import cairosvg
 from concurrent.futures import ThreadPoolExecutor
